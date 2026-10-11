@@ -43,8 +43,13 @@ async def root():
     }
 
 @app.get("/health")
-async def health_check():
-    """Kiểm tra tình trạng sống của API và kết nối đến MongoDB Atlas."""
+def health_check():
+    """Kiểm tra phản hồi nhanh (Liveness check)."""
+    return {"status": "ok"}
+
+@app.get("/health/db")
+async def health_check_db():
+    """Kiểm tra tình trạng kết nối đến MongoDB Atlas (Readiness check)."""
     try:
         client.admin.command('ping')
         return {
@@ -52,7 +57,7 @@ async def health_check():
             "database": "connected"
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.error(f"MongoDB health check failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Mất kết nối tới cơ sở dữ liệu MongoDB Atlas"

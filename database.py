@@ -1,7 +1,10 @@
+
 import os
 from pathlib import Path
 from pymongo import MongoClient
 from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
+import certifi
 
 # Xác định đường dẫn tuyệt đối đến file .env cùng cấp
 env_path = Path(__file__).resolve().parent / ".env"
@@ -15,7 +18,8 @@ client = MongoClient(
     serverSelectionTimeoutMS=5000,
     connectTimeoutMS=5000,
     maxPoolSize=50,
-    minPoolSize=5
+    minPoolSize=5,
+    tlsCAFile=certifi.where()
 )
 db = client["rengofun_auth"]
 users_collection = db["users"]

@@ -1,7 +1,49 @@
-venv/
+# ==========================================
+# rengofun-auth-api - Git Ignore Configuration
+# ==========================================
+
+# --- Environment & Sensitive Credentials ---
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+
+# --- Python Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Python Bytecode & Cache ---
 __pycache__/
-*.pyc
-node_modules/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Build & Distribution ---
 build/
 dist/
+*.egg-info/
+node_modules/
+
+# --- Logs & Databases ---
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# --- Editor & IDE Files ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS Artifacts ---
+.DS_Store
+Thumbs.db
+desktop.ini
