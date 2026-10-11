@@ -9,19 +9,27 @@ load_dotenv(dotenv_path=env_path)
 
 MONGO_URI = os.getenv("MONGO_URI")
 
-# In kiểm tra xem biến môi trường đã được đọc chưa
-print(f">>> Kiem tra MONGO_URI: {MONGO_URI}")
-
-# Khởi tạo kết nối đến MongoDB Atlas
-client = MongoClient(MONGO_URI)
+# Khởi tạo kết nối đến MongoDB Atlas với thiết lập tối ưu
+client = MongoClient(
+    MONGO_URI,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=5000,
+    maxPoolSize=50,
+    minPoolSize=5
+)
 db = client["rengofun_auth"]
 users_collection = db["users"]
 
-if __name__ == "__main__":
+def init_db():
+    """Khởi tạo và đảm bảo chỉ mục (Unique Index) trên MongoDB Atlas."""
     try:
-        # Gửi ping kiểm tra kết nối
         client.admin.command('ping')
-        print(">>> Ket noi MongoDB Atlas THANH CONG! San sang luu tru du lieu.")
+        users_collection.create_index("username", unique=True)
+        print(">>> Ket noi MongoDB Atlas THANH CONG! Da dam bao Unique Index tren field 'username'.")
+        return True
     except Exception as e:
-        print(">>> Ket noi THAT BAI. Loi chi tiet:")
-        print(e)
+        print(f">>> Loi khi ket noi hoac thiet lap index tren MongoDB: {e}")
+        return False
+
+if __name__ == "__main__":
+    init_db()
