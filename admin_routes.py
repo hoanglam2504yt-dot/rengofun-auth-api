@@ -1,16 +1,16 @@
 """
 Admin Routes — RenGoFun Auth API v3.0
 Tất cả endpoint đều bảo vệ bởi require_admin dependency (RBAC Guard).
-Cập nhật theo Update_Auth_Database_Design.md:
-- Hỗ trợ định danh linh hoạt (id, email, username)
-- Quản lý password_reset_requests (List, Approve gửi Gmail, Reject)
-- Role enum: free | pro_tier_1 | pro_tier_2 | admin (tương thích cả plan cũ)
-- Khóa / Mở khóa tài khoản (is_active / is_verified)
-- Revoke sessions theo chuẩn mới (is_revoked = True)
+
+Thiết kế theo chuẩn:
+- RBAC Guard: mọi endpoint đều gắn Depends(require_admin)
+- Định danh linh hoạt: nhận id / email / username
+- Password Reset workflow: List → Approve (sinh mật khẩu + gửi Gmail) → Reject
+- Role enum: free | pro_tier_1 | pro_tier_2 | admin
+- Đồng bộ cả trường 'plan' mỗi khi cập nhật 'role'
+- Ghi audit log mọi thao tác nhạy cảm
 """
 import os
-import secrets
-import string
 import uuid
 import smtplib
 import logging
@@ -24,12 +24,14 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from pymongo.errors import PyMongoError
 import jwt
-import bcrypt
+
+# Import helpers từ auth.py để tránh trùng lặp logic
+from auth import get_password_hash, generate_temp_password
 
 from database import (
     users_collection,
+    # security_audit_logs_collection là alias của security_logs_collection (xem database.py)
     security_logs_collection,
-    security_audit_logs_collection,
     user_sessions_collection,
     password_resets_collection,
     db,
@@ -123,21 +125,8 @@ def _write_audit_log(action: str, target: str, performed_by: str, extra: dict = 
         pass
 
 
-def _generate_temp_password(length: int = 12) -> str:
-    """Sinh mật khẩu tạm thời an toàn (module secrets)."""
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-    while True:
-        pwd = "".join(secrets.choice(alphabet) for _ in range(length))
-        if (
-            any(c.isupper() for c in pwd)
-            and any(c.islower() for c in pwd)
-            and any(c.isdigit() for c in pwd)
-            and any(c in "!@#$%^&*" for c in pwd)
-        ):
-            return pwd
-
-
 def _send_email(to_email: str, subject: str, html_body: str) -> bool:
+    """Gửi email qua SMTP Gmail."""
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -153,10 +142,6 @@ def _send_email(to_email: str, subject: str, html_body: str) -> bool:
     except Exception as e:
         logger.error(f"[SMTP Admin] Lỗi gửi mail tới {to_email}: {e}")
         return False
-
-
-def _hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def _format_user_doc(u: dict) -> dict:
@@ -660,11 +645,12 @@ async def approve_password_reset(
         if not user:
             raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản người dùng")
 
-        temp_password = _generate_temp_password(12)
+        # Dùng generate_temp_password từ auth.py (single source of truth)
+        temp_password = generate_temp_password(12)
 
         users_collection.update_one(
             {"id": user["id"]},
-            {"$set": {"password_hash": _hash_password(temp_password), "updated_at": now}},
+            {"$set": {"password_hash": get_password_hash(temp_password), "updated_at": now}},
         )
 
         # Thu hồi toàn bộ session

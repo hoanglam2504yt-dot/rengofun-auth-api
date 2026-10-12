@@ -48,5 +48,11 @@ node_modules/
 Thumbs.db
 desktop.ini
 
+# --- Dev/Test Scripts (chứa secret hoặc chỉ chạy nội bộ) ---
 migrate_db.py
-test_*.pygit
+test_*.py
+seed_*.py
+
+# --- Tauri & Frontend build nếu lựt vào repo này ---
+dist/
+node_modules/
