@@ -23,12 +23,17 @@ client = MongoClient(
 )
 db = client["rengofun_auth"]
 users_collection = db["users"]
+security_audit_logs_collection = db["security_audit_logs"]
+user_sessions_collection = db["user_sessions"]
 
 def init_db():
     """Khởi tạo và đảm bảo chỉ mục (Unique Index) trên MongoDB Atlas."""
     try:
         client.admin.command('ping')
         users_collection.create_index("username", unique=True)
+        security_audit_logs_collection.create_index("timestamp")
+        security_audit_logs_collection.create_index("ip_address")
+        user_sessions_collection.create_index("username")
         print(">>> Ket noi MongoDB Atlas THANH CONG! Da dam bao Unique Index tren field 'username'.")
         return True
     except Exception as e:

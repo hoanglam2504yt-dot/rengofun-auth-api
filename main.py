@@ -1,12 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from pydantic import BaseModel
 from pymongo.errors import PyMongoError, DuplicateKeyError
-from database import client, users_collection, init_db
+from database import client, users_collection, security_audit_logs_collection, init_db
 from auth import get_password_hash, verify_password, create_access_token
 from fastapi.middleware.cors import CORSMiddleware
+from admin_routes import router as admin_router
 
 logger = logging.getLogger("rengofun_auth")
 
@@ -18,7 +19,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="RenGoFun Auth API",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -29,6 +30,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount Admin Router
+app.include_router(admin_router)
 
 class UserAuthSchema(BaseModel):
     username: str
@@ -79,6 +83,7 @@ async def register(user_data: UserAuthSchema):
             "username": user_data.username,
             "password_hash": get_password_hash(user_data.password),
             "plan": "free",
+            "role": "user",
             "created_at": datetime.now(timezone.utc),
             "is_active": True
         }
@@ -118,18 +123,39 @@ async def login(user_data: UserAuthSchema):
                 detail="Tài khoản hoặc mật khẩu không chính xác"
             )
 
-        # 3. Tạo thẻ bài JWT chứa định danh và gói quyền
+        # 3. Kiểm tra tài khoản có bị khóa không
+        if not user.get("is_active", True):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên."
+            )
+
+        # 4. Tạo thẻ bài JWT chứa định danh, gói quyền và vai trò
         token_payload = {
             "sub": user["username"],
-            "plan": user.get("plan", "free")
+            "plan": user.get("plan", "free"),
+            "role": user.get("role", "user")
         }
         access_token = create_access_token(token_payload)
+
+        # 5. Ghi nhật ký audit
+        try:
+            security_audit_logs_collection.insert_one({
+                "action": "login_success",
+                "username": user["username"],
+                "ip_address": "unknown",
+                "timestamp": datetime.now(timezone.utc),
+                "http_status": 200
+            })
+        except Exception:
+            pass  # Không để lỗi log làm hỏng login
 
         return {
             "access_token": access_token,
             "token_type": "bearer",
             "username": user["username"],
-            "plan": user.get("plan", "free")
+            "plan": user.get("plan", "free"),
+            "role": user.get("role", "user")
         }
     except HTTPException:
         raise
