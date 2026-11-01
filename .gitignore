@@ -1,8 +1,9 @@
-# ==========================================
-# rengofun-auth-api - Git Ignore Configuration
-# ==========================================
+# ==============================================================================
+# rengofun-auth-api (Cloud Auth API) - Git Ignore Configuration
+# ==============================================================================
 
-# --- Environment & Sensitive Credentials ---
+# --- 1. Environment & Sensitive Credentials (TUYỆT ĐỐI KHÔNG ĐẨY LÊN GITHUB) ---
+# Chứa MONGODB_URL, JWT_SECRET_KEY, RESEND_API_KEY, BREVO_API_KEY...
 .env
 .env.*
 !.env.example
@@ -11,13 +12,13 @@
 *.cert
 *.crt
 
-# --- Python Virtual Environments ---
+# --- 2. Python Virtual Environments ---
 venv/
 .venv/
 env/
 ENV/
 
-# --- Python Bytecode & Cache ---
+# --- 3. Python Bytecode & Test Cache ---
 __pycache__/
 *.py[cod]
 *$py.class
@@ -25,34 +26,43 @@ __pycache__/
 .coverage
 htmlcov/
 
-# --- Build & Distribution ---
+# --- 4. Build & Distribution ---
 build/
 dist/
 *.egg-info/
 node_modules/
 
-# --- Logs & Databases ---
+# --- 5. Logs & Local Databases ---
+logs/
 *.log
 *.sqlite
 *.sqlite3
+*.sqlite-shm
+*.sqlite-wal
 *.db
+*.db-shm
+*.db-wal
+*.db-journal
 
-# --- Editor & IDE Files ---
+# --- 6. Dev/Test/Migration Scripts & Scratch Files (Chỉ chạy nội bộ) ---
+migrate_db.py
+test_*.py
+seed_*.py
+scratch_*
+start_*.bat
+start_*.vbs
+*.tmp
+*.bak
+md/
+docs/
+.agents/
+
+# --- 7. Editor, IDE & OS Artifacts ---
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# --- OS Artifacts ---
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# --- Dev/Test Scripts (chứa secret hoặc chỉ chạy nội bộ) ---
-migrate_db.py
-test_*.py
-seed_*.py
-
-# --- Tauri & Frontend build nếu lựt vào repo này ---
-dist/
-node_modules/
+ehthumbs.db
