@@ -3,14 +3,20 @@
 # ==============================================================================
 
 # --- 1. Environment & Sensitive Credentials (TUYỆT ĐỐI KHÔNG ĐẨY LÊN GITHUB) ---
-# Chứa MONGODB_URL, JWT_SECRET_KEY, RESEND_API_KEY, BREVO_API_KEY...
+# Chứa MONGO_URI, SECRET_KEY, SMTP_USER, SMTP_PASSWORD, RESEND_API_KEY...
 .env
+*.env
+.env.local
+.env.*.local
 .env.*
 !.env.example
+!.env.local.example
 *.pem
 *.key
 *.cert
 *.crt
+*.p12
+*.pfx
 
 # --- 2. Python Virtual Environments ---
 venv/
@@ -18,12 +24,15 @@ venv/
 env/
 ENV/
 
-# --- 3. Python Bytecode & Test Cache ---
+# --- 3. Python Bytecode, Lint & Test Cache ---
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
+coverage/
 htmlcov/
 
 # --- 4. Build & Distribution ---
@@ -44,18 +53,20 @@ logs/
 *.db-wal
 *.db-journal
 
-# --- 6. Dev/Test/Migration Scripts & Scratch Files (Chỉ chạy nội bộ) ---
+# --- 6. Dev/Test/Migration Scripts, Launchers & Scratch Files (Chỉ chạy nội bộ) ---
 migrate_db.py
 test_*.py
 seed_*.py
 scratch_*
-start_*.bat
-start_*.vbs
+*.bat
+*.vbs
+*.lnk
 *.tmp
 *.bak
 md/
 docs/
 .agents/
+.antigravity/
 
 # --- 7. Editor, IDE & OS Artifacts ---
 .vscode/
